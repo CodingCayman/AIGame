@@ -222,24 +222,29 @@
 
     /* Touch / on-screen controls */
     #touch-controls {
-      margin: 8px auto 0 auto;
+      margin: 24px auto 0 auto;  /* moved further down */
       display: flex;
       justify-content: center;
-      gap: 10px;
+      gap: 16px;
       max-width: 800px;
     }
 
     .touch-btn {
       flex: 1;
-      max-width: 160px;
-      padding: 10px 12px;
-      font-size: 18px;
-      border-radius: 10px;
+      max-width: 220px;          /* wider */
+      padding: 18px 24px;        /* taller / bigger hit area */
+      font-size: 24px;           /* larger text */
+      border-radius: 14px;
       border: 1px solid #555;
       background: #333;
       color: #f4f4f4;
       box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
       touch-action: manipulation;
+      cursor: pointer;
+      user-select: none;         /* prevent text selection */
+      -webkit-user-select: none; /* Safari / iOS */
+      -ms-user-select: none;
+      outline: none;
     }
 
     .touch-btn:active {
@@ -720,40 +725,38 @@
 
     // ----- TOUCH / MOUSE HOLD CONTROLS -----
 
-    let leftInterval = null;
-    let rightInterval = null;
-    let fireInterval = null;
-
-    function startHold(intervalRefName, fn, intervalMs) {
-      // Run once immediately
-      fn();
-      // Then keep running while held
-      if (intervalRefName.value) clearInterval(intervalRefName.value);
-      intervalRefName.value = setInterval(fn, intervalMs);
-    }
-
-    function stopHold(intervalRefName) {
-      if (intervalRefName.value) {
-        clearInterval(intervalRefName.value);
-        intervalRefName.value = null;
-      }
-    }
-
     const leftRef = { value: null };
     const rightRef = { value: null };
     const fireRef = { value: null };
 
+    function startHold(ref, fn, intervalMs) {
+      fn(); // run once immediately
+      if (ref.value) clearInterval(ref.value);
+      ref.value = setInterval(fn, intervalMs);
+    }
+
+    function stopHold(ref) {
+      if (ref.value) {
+        clearInterval(ref.value);
+        ref.value = null;
+      }
+    }
+
     function bindHoldButton(btn, ref, fn, intervalMs) {
       btn.addEventListener("pointerdown", (e) => {
         e.preventDefault();
+        btn.setPointerCapture(e.pointerId);
         startHold(ref, fn, intervalMs);
       });
 
-      const stop = () => stopHold(ref);
+      const stop = (e) => {
+        e.preventDefault();
+        stopHold(ref);
+      };
 
       btn.addEventListener("pointerup", stop);
-      btn.addEventListener("pointerleave", stop);
       btn.addEventListener("pointercancel", stop);
+      btn.addEventListener("pointerleave", stop);
     }
 
     bindHoldButton(btnLeft, leftRef, rotateLeft, 90);   // rotate about every 90ms
